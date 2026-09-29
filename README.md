@@ -23,8 +23,11 @@ calculadora/
 ## 🛠️ Tecnologias Utilizadas
 
 **Python**: Responsável pelo processamento e lógica dos cálculos (calculo.py).
+---
 **HTML/CSS/JS**: Interface web interativa (template/index.html).
+---
 **Git**: Controle de versão.
+---
 
 ## 🚀 Como Executar o Projeto
 
