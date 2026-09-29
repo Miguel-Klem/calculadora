@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcu calculaorladora Completa</title>
+    <style>
+        :root {
+            --bg: #101826;
+            --panel: #1d293b;
+            --panel-2: #243244;
+            --text: #e2e8f0;
+            --muted: #5F729A;
+            --accent: #296681;
+            --accent-2: #1c8342;
+            --warn: #8f6926;
+            --danger: #971d1d;
+            --shadow: rgba(37, 60, 115, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #0f172a, #111827 40%, #1C3474);
+            color: var(--text);
+        }
+
+        .calculadora {
+            width: min(92vw, 400px);
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid #371A6E;
+            border-radius: 24px;
+            box-shadow: 0 30px 60px var(--shadow);
+            padding: 22px;
+            backdrop-filter: blur(10px);
+        }
+
+        .display {
+            background: linear-gradient(180deg, #0f172a, #111827);
+            border-radius: 18px;
+            padding: 18px 16px 14px;
+            margin-bottom: 18px;
+            border: 1px solid #371A6E;
+            text-align: right;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .formula {
+            font-size: 0.9rem;
+            color: var(--muted);
+            min-height: 24px;
+            word-break: break-all;
+        }
+
+        .resultado {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 700;
+            word-break: break-all;
+            line-height: 1.2;
+        }
+
+        .teclado {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        button {
+            appearance: none;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-height: 64px;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+            color: var(--text);
+            background: var(--panel-2);
+        }
+
+        button:hover {
+            filter: brightness(1.08);
+        }
+
+        button:active {
+            transform: translateY(1px) scale(0.99);
+        }
+
+        .operacao {
+            background: rgba(56, 189, 248, 0.18);
+            color: #bae6fd;
+        }
+
+        .igual {
+            background: linear-gradient(180deg, var(--accent-2), #16a34a);
+            color: white;
+        }
+
+        .limpar {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fecaca;
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 420px) {
+            .calculadora {
+                padding: 18px;
+            }
+
+            button {
+                min-height: 58px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculadora">
+        <div class="display" aria-live="polite">
+            <div id="formula" class="formula">0</div>
+            <div id="resultado" class="resultado">0</div>
+        </div>
+
+        <div class="teclado">
+            <button class="limpar" data-action="clear">C</button>
+            <button class="limpar" data-action="backspace">⌫</button>
+            <button class="operacao" data-value="%">%</button>
+            <button class="operacao" data-value="/">÷</button>
+
+            <button data-value="7">7</button>
+            <button data-value="8">8</button>
+            <button data-value="9">9</button>
+            <button class="operacao" data-value="*">×</button>
+
+            <button data-value="4">4</button>
+            <button data-value="5">5</button>
+            <button data-value="6">6</button>
+            <button class="operacao" data-value="-">−</button>
+
+            <button data-value="1">1</button>
+            <button data-value="2">2</button>
+            <button data-value="3">3</button>
+            <button class="operacao" data-value="+">+</button>
+
+            <button class="zero" data-value="0">0</button>
+            <button data-value=".">.</button>
+            <button class="igual" data-action="calculate">=</button>
+        </div>
+    </div>
+
+    <script>
+        const formulaEl = document.getElementById('formula');
+        const resultadoEl = document.getElementById('resultado');
+        let expression = '';
+
+        function updateDisplay() {
+            formulaEl.textContent = expression || '0';
+            resultadoEl.textContent = expression ? '0' : '0';
+        }
+
+        function appendValue(value) {
+            const invalidChars = /[a-zA-Z]/i;
+            if (invalidChars.test(value)) {
+                return;
+            }
+
+            if (value === '.') {
+                const lastNumber = expression.split(/[-+*/%()]+/).at(-1);
+                if (lastNumber && lastNumber.includes('.')) {
+                    return;
+                }
+            }
+
+            expression += value;
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            expression = '';
+            updateDisplay();
+        }
+
+        function backspace() {
+            expression = expression.slice(0, -1);
+            updateDisplay();
+        }
+
+        function sanitizeExpression(raw) {
+            let cleaned = raw.trim();
+            cleaned = cleaned.replace(/×/g, '*').replace(/÷/g, '/').replace(/,/g, '.');
+            cleaned = cleaned.replace(/%/g, '/100');
+            cleaned = cleaned.replace(/−/g, '-');
+
+            if (!cleaned) {
+                return '0';
+            }
+
+            if (!/^[0-9+\-*/().\s]+$/.test(cleaned)) {
+                throw new Error('Expressão inválida');
+            }
+
+            return cleaned;
+        }
+
+        function calcularExpressao(rawExpression) {
+            const sanitized = sanitizeExpression(rawExpression);
+            const fn = new Function(`"use strict"; return (${sanitized});`);
+            const result = fn();
+
+            if (!Number.isFinite(result)) {
+                throw new Error('Resultado inválido');
+            }
+
+            return Number(result.toFixed(10));
+        }
+
+        function handleCalculate() {
+            try {
+                const result = calcularExpressao(expression);
+                expression = String(result);
+                formulaEl.textContent = expression;
+                resultadoEl.textContent = result;
+            } catch (error) {
+                formulaEl.textContent = 'Erro';
+                resultadoEl.textContent = 'Inválida';
+                expression = '';
+                setTimeout(() => {
+                    clearDisplay();
+                }, 1000);
+            }
+        }
+
+        document.querySelectorAll('button').forEach((button) => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.action;
+                const value = button.dataset.value;
+
+                if (action === 'clear') {
+                    clearDisplay();
+                    return;
+                }
+
+                if (action === 'backspace') {
+                    backspace();
+                    return;
+                }
+
+                if (action === 'calculate') {
+                    handleCalculate();
+                    return;
+                }
+
+                appendValue(value);
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            const { key } = event;
+
+            if (/^[0-9]$/.test(key) || ['+', '-', '*', '/', '.', '%', '(', ')'].includes(key)) {
+                event.preventDefault();
+                appendValue(key);
+            }
+
+            if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                handleCalculate();
+            }
+
+            if (key === 'Backspace') {
+                event.preventDefault();
+                backspace();
+            }
+
+            if (key === 'Escape') {
+                event.preventDefault();
+                clearDisplay();
+            }
+        });
+
+        updateDisplay();
+    </script>
+</body>
+</html>
